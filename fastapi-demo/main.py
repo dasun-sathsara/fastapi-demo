@@ -38,7 +38,6 @@ def get_posts():
 
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = list(filter(lambda post: post["id"] == id, my_posts))
     cursor.execute("""SELECT * FROM post WHERE id=%s""", (id,))
     post = cursor.fetchone()
 
@@ -50,7 +49,6 @@ def get_post(id: int):
 
 @app.post("/posts/", status_code=status.HTTP_201_CREATED)
 def add_post(post: Post):
-    print(post)
     cursor.execute(
         """INSERT INTO post(title,content,published) VALUES(%s,%s,%s) RETURNING *""", (post.title, post.content, post.published)
     )
@@ -61,20 +59,23 @@ def add_post(post: Post):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    post = list(filter(lambda post: post["id"] == id, my_posts))
-    if len(post) == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
+    cursor.execute("""DELETE FROM post WHERE id=%s RETURNING *""", (id,))
+    conn.commit()
+    deleted_post = cursor.fetchone()
 
-    my_posts.remove(post[0])
+    if not deleted_post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
 
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    old_post = list(filter(lambda p: p["id"] == id, my_posts))
-    if len(old_post) == 0:
+    cursor.execute(
+        """UPDATE post SET title=%s, content=%a, published=%a WHERE id=%a; RETURNING *""",
+        (post.title, post.content, post.published, id),
+    )
+    conn.commit()
+    updated_post = cursor.fetchone()
+    if not updated_post == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
-
-    index = my_posts.index(old_post[0])
-    my_posts[index] = post.dict()
 
     return {"data": post}
