@@ -31,14 +31,14 @@ while True:
 
 @app.get("/posts/")
 def get_posts():
-    cursor.execute("""SELECT * FROM post""")
+    cursor.execute("""SELECT * FROM post.post""")
     posts = cursor.fetchall()
     return {"data": posts}
 
 
 @app.get("/posts/{id}")
 def get_post(id: int):
-    cursor.execute("""SELECT * FROM post WHERE id=%s""", (id,))
+    cursor.execute("""SELECT * FROM post.post WHERE id=%s""", (id,))
     post = cursor.fetchone()
 
     if not post:
@@ -50,7 +50,7 @@ def get_post(id: int):
 @app.post("/posts/", status_code=status.HTTP_201_CREATED)
 def add_post(post: Post):
     cursor.execute(
-        """INSERT INTO post(title,content,published) VALUES(%s,%s,%s) RETURNING *""", (post.title, post.content, post.published)
+        """INSERT INTO post.post(title,content,published) VALUES(%s,%s,%s) RETURNING *""", (post.title, post.content, post.published)
     )
     conn.commit()
     new_post = cursor.fetchone()
@@ -59,9 +59,9 @@ def add_post(post: Post):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    cursor.execute("""DELETE FROM post WHERE id=%s RETURNING *""", (id,))
-    conn.commit()
+    cursor.execute("""DELETE FROM post.post WHERE id=%s RETURNING *""", (id,))
     deleted_post = cursor.fetchone()
+    conn.commit()
 
     if not deleted_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
@@ -70,12 +70,12 @@ def delete_post(id: int):
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
     cursor.execute(
-        """UPDATE post SET title=%s, content=%a, published=%a WHERE id=%a; RETURNING *""",
+        """UPDATE post.post SET title=%s, content=%s, published=%s WHERE id=%s RETURNING *""",
         (post.title, post.content, post.published, id),
     )
-    conn.commit()
     updated_post = cursor.fetchone()
-    if not updated_post == 0:
+    conn.commit()
+    if not updated_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
 
     return {"data": post}
