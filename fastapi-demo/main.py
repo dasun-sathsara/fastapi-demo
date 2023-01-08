@@ -24,7 +24,6 @@ while True:
         print("Database Connection Successfull")
         break
     except psycopg2.Error as e:
-        print(e)
         print("Database Connection Unsuccessful")
         print("Retying...")
         time.sleep(3)
@@ -51,7 +50,6 @@ def get_post(id: int):
 
 @app.post("/posts/", status_code=status.HTTP_201_CREATED)
 def add_post(post: Post):
-    print(post)
     cursor.execute(
         """INSERT INTO post(title,content,published) VALUES(%s,%s,%s) RETURNING *""", (post.title, post.content, post.published)
     )
