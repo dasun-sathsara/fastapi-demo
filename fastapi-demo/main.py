@@ -10,6 +10,8 @@ from typing import Optional
 
 from database import get_db
 
+import models
+
 
 app = FastAPI()
 
