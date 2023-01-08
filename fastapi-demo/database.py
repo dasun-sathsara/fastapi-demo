@@ -16,5 +16,3 @@ def get_db():
     finally:
         db.close()
 
-
-print(get_db())

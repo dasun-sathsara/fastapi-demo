@@ -2,10 +2,13 @@ import time
 
 import psycopg2
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy.orm import Session
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from typing import Optional
+
+from database import get_db
 
 
 app = FastAPI()
@@ -30,9 +33,8 @@ while True:
 
 
 @app.get("/posts/")
-def get_posts():
-    cursor.execute("""SELECT * FROM post""")
-    posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
