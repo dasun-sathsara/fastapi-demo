@@ -53,12 +53,12 @@ def get_post(id: int):
 
 
 @app.post("/posts/", status_code=status.HTTP_201_CREATED)
-def add_post(post: Post):
-    cursor.execute(
-        """INSERT INTO post(title,content,published) VALUES(%s,%s,%s) RETURNING *""", (post.title, post.content, post.published)
-    )
-    conn.commit()
-    new_post = cursor.fetchone()
+def add_post(post: Post, db: Session = Depends(get_db)):
+    new_post = models.Post(title=post.title, content=post.content, published=post.published)
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
     return {"date": new_post}
 
 
