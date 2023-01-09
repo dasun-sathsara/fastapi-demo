@@ -76,12 +76,14 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    old_post = list(filter(lambda p: p["id"] == id, my_posts))
-    if len(old_post) == 0:
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    old_post = post_query.first()
+
+    if old_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
 
-    index = my_posts.index(old_post[0])
-    my_posts[index] = post.dict()
+    post_query.update(post.dict(), synchronize_session=False)
+    db.commit()
 
-    return {"data": post}
+    return {"data": post_query.first()}
