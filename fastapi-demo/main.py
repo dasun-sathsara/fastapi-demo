@@ -63,12 +63,16 @@ def add_post(post: Post, db: Session = Depends(get_db)):
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    post = list(filter(lambda post: post["id"] == id, my_posts))
-    if len(post) == 0:
+def delete_post(id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id)
+
+    if post.first() == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
 
-    my_posts.remove(post[0])
+    post.delete()
+    db.commit()
+
+    return {"message": "Post deleted"}
 
 
 @app.put("/posts/{id}")
