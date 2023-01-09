@@ -1,16 +1,11 @@
-import time
-
 import psycopg2
-
 from fastapi import Depends, FastAPI, HTTPException, status
-from sqlalchemy.orm import Session
-from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 from typing import Optional
 
-from database import get_db
-
 import models
+from database import get_db
 
 
 app = FastAPI()
@@ -22,18 +17,6 @@ class Post(BaseModel):
     published: Optional[bool] = True
 
 
-while True:
-    try:
-        conn = psycopg2.connect("dbname=fastapi user=postgres password=Ds20020618 host=localhost port=5432")
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        print("Database Connection Successfull")
-        break
-    except psycopg2.Error as e:
-        print("Database Connection Unsuccessful")
-        print("Retying...")
-        time.sleep(3)
-
-
 @app.get("/posts/")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
@@ -41,10 +24,8 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.get("/posts/{id}")
-def get_post(id: int):
-    post = list(filter(lambda post: post["id"] == id, my_posts))
-    cursor.execute("""SELECT * FROM post WHERE id=%s""", (id,))
-    post = cursor.fetchone()
+def get_post(id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id).first()
 
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id:{id} was not found")
