@@ -2,9 +2,10 @@ import psycopg2
 from fastapi import Depends, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List, Optional
 
 import models
+import schemas
 from database import get_db
 
 
@@ -17,13 +18,13 @@ class Post(BaseModel):
     published: Optional[bool] = True
 
 
-@app.get("/posts/")
+@app.get("/posts/", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return {"data": posts}
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
 
@@ -33,7 +34,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return {"data": post}
 
 
-@app.post("/posts/", status_code=status.HTTP_201_CREATED)
+@app.post("/posts/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 def add_post(post: Post, db: Session = Depends(get_db)):
     new_post = models.Post(title=post.title, content=post.content, published=post.published)
     db.add(new_post)
@@ -56,7 +57,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return {"message": "Post deleted"}
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.PostResponse)
 def update_post(id: int, post: Post, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     old_post = post_query.first()
