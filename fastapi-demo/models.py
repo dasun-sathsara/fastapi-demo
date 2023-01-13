@@ -34,4 +34,14 @@ class Vote(Base):
     post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"), primary_key=True)
 
 
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    content = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+    post_id = Column(Integer, ForeignKey("post.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+
 Base.metadata.create_all(engine)
